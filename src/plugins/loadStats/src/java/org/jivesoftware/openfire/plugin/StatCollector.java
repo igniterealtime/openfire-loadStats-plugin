@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.plugin;
+package org.jivesoftware.openfire.plugin;
 
 import org.apache.mina.common.ExecutorThreadModel;
 import org.apache.mina.management.MINAStatCollector;
@@ -18,9 +18,9 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 
 import java.io.BufferedWriter;
 import java.io.File;

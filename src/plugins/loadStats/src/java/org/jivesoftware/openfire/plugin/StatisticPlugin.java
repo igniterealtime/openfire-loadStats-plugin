@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.plugin;
+package org.jivesoftware.openfire.plugin;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
 
 import java.io.File;
 
