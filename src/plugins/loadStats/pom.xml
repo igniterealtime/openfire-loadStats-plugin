@@ -11,7 +11,7 @@
     <name>LoadStats Plugin</name>
 
     <build>
-        <sourceDirectory>../../src/plugins/loadStats/src/java</sourceDirectory>
+        <sourceDirectory>src/java</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
