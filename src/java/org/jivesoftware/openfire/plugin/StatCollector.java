@@ -21,7 +21,9 @@ import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTE
 import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.management.MINAStatCollector;
 import org.apache.mina.transport.socket.SocketAcceptor;
+import org.jivesoftware.database.ConnectionProvider;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
@@ -48,6 +50,15 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class StatCollector extends TimerTask {
 
     private static final Logger Log = LoggerFactory.getLogger(StatCollector.class);
+
+    private static DefaultConnectionProvider getDefaultConnectionProvider() {
+        final ConnectionProvider connectionProvider = DbConnectionManager.getConnectionProvider();
+        if(connectionProvider instanceof DefaultConnectionProvider) {
+            return (DefaultConnectionProvider) connectionProvider;
+        } else {
+            return null;
+        }
+    }
 
     private boolean headerPrinter = false;
     private List<String> content = new ArrayList<String>();
@@ -79,7 +90,13 @@ public class StatCollector extends TimerTask {
             sb.append(System.currentTimeMillis());
             sb.append(',');
             // Add info about the db connection pool
-            sb.append(DbConnectionManager.getConnectionProvider().toString());
+            sb.append(getMinimumConnectionCount());
+            sb.append(',');
+            sb.append(getMaximumConnectionCount());
+            sb.append(',');
+            sb.append(getActiveConnectionCount());
+            sb.append(',');
+            sb.append(getServedCount());
             sb.append(',');
             // Add info about the thread pool that process incoming requests
             ExecutorFilter executorFilter = (ExecutorFilter) socketAcceptor.getFilterChain().get(EXECUTOR_FILTER_NAME);
@@ -155,5 +172,25 @@ public class StatCollector extends TimerTask {
             statCollector.stop();
             TaskEngine.getInstance().cancelScheduledTask(this);
         }
+    }
+
+    public int getActiveConnectionCount() {
+        final DefaultConnectionProvider defaultConnectionProvider = getDefaultConnectionProvider();
+        return defaultConnectionProvider == null ? 0 : defaultConnectionProvider.getActiveConnections();
+    }
+
+    public long getServedCount() {
+        final DefaultConnectionProvider defaultConnectionProvider = getDefaultConnectionProvider();
+        return defaultConnectionProvider == null ? 0 : defaultConnectionProvider.getConnectionsServed();
+    }
+
+    public int getMaximumConnectionCount() {
+        final DefaultConnectionProvider defaultConnectionProvider = getDefaultConnectionProvider();
+        return defaultConnectionProvider == null ? 0 : defaultConnectionProvider.getMaxConnections();
+    }
+
+    public int getMinimumConnectionCount() {
+        final DefaultConnectionProvider defaultConnectionProvider = getDefaultConnectionProvider();
+        return defaultConnectionProvider == null ? 0 : defaultConnectionProvider.getMinConnections();
     }
 }
