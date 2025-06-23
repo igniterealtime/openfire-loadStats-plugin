@@ -6,6 +6,6 @@
     <description>Logs load statistics to a file</description>
     <author>Jive Software</author>
     <version>${project.version}</version>
-    <date>02/19/2021</date>
-    <minServerVersion>3.9.0</minServerVersion>
+    <date>2025-06-23</date>
+    <minServerVersion>4.8.0</minServerVersion>
 </plugin>

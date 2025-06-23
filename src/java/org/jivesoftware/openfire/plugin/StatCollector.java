@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,10 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTER_NAME;
-
-import org.apache.mina.filter.executor.ExecutorFilter;
-import org.apache.mina.management.MINAStatCollector;
-import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.database.ConnectionProvider;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
@@ -36,11 +29,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimerTask;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Collector of raw data that is print to a log file every minute.
@@ -61,24 +54,13 @@ public class StatCollector extends TimerTask {
     }
 
     private boolean headerPrinter = false;
-    private List<String> content = new ArrayList<String>();
-    private SocketAcceptor socketAcceptor;
+    private List<String> content = new ArrayList<>();
     // Take a sample every X seconds
     private int frequency;
     private boolean started = false;
-    private MINAStatCollector statCollector;
 
     public StatCollector(int frequency) {
         this.frequency = frequency;
-        ConnectionManagerImpl connectionManager =
-                ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-        if (JiveGlobals.getBooleanProperty("statistic.connectionmanager", false)) {
-            socketAcceptor = connectionManager.getMultiplexerSocketAcceptor();
-        }
-        else {
-            socketAcceptor = connectionManager.getSocketAcceptor();
-        }
-        statCollector = new MINAStatCollector(socketAcceptor, frequency - 1000);
     }
 
     @Override
@@ -97,33 +79,9 @@ public class StatCollector extends TimerTask {
             sb.append(getActiveConnectionCount());
             sb.append(',');
             sb.append(getServedCount());
-            sb.append(',');
-            // Add info about the thread pool that process incoming requests
-            ExecutorFilter executorFilter = (ExecutorFilter) socketAcceptor.getFilterChain().get(EXECUTOR_FILTER_NAME);
-            ThreadPoolExecutor executor = (ThreadPoolExecutor) executorFilter.getExecutor();
-            sb.append(executor.getCorePoolSize());
-            sb.append(',');
-            sb.append(executor.getActiveCount());
-            sb.append(',');
-            try {
-                sb.append(executor.getQueue().size());
-            } catch (UnsupportedOperationException e) {
-                sb.append(-1);
-            }
-            sb.append(',');
-            sb.append(executor.getCompletedTaskCount());
             // Add info about number of connected sessions
             sb.append(',');
             sb.append(SessionManager.getInstance().getConnectionsCount(false));
-            // Add info about MINA statistics
-            sb.append(',');
-            sb.append(statCollector.getMsgRead());
-            sb.append(',');
-            sb.append(statCollector.getMsgWritten());
-            sb.append(',');
-            sb.append(statCollector.getQueuedEvents());
-            sb.append(',');
-            sb.append(statCollector.getScheduledWrites());
 
             // Add new line of content with current stats
             content.add(sb.toString());
@@ -131,7 +89,7 @@ public class StatCollector extends TimerTask {
             // Check if we need to print content to file (print content every minute)
             if (content.size() > (60f / frequency * 1000)) {
                 try {
-                    File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "logs", JiveGlobals.getProperty("statistic.filename", "stats.txt"));
+                    File file = JiveGlobals.getHomePath().resolve("logs").resolve(JiveGlobals.getProperty("statistic.filename", "stats.txt")).toFile();
                     if (!file.exists()) {
                         file.createNewFile();
                     }
@@ -162,14 +120,12 @@ public class StatCollector extends TimerTask {
     public synchronized void start() {
         if (!started) {
             started = true;
-            statCollector.start();
-            TaskEngine.getInstance().scheduleAtFixedRate(this, 1000, frequency);
+            TaskEngine.getInstance().scheduleAtFixedRate(this, Duration.ofMillis(1000), Duration.ofMillis(frequency));
         }
     }
 
     public void stop() {
         if (started) {
-            statCollector.stop();
             TaskEngine.getInstance().cancelScheduledTask(this);
         }
     }
